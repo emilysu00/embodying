@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "Focus Study Companion (Prototype)",
+  "version": "1.3.0",
+  "description": "Focus dashboard, cross-tab cat reminders and background study timer.",
+  "permissions": ["storage", "alarms", "notifications", "tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open Focus Dashboard"
+  },
+  "commands": {
+    "bored": {
+      "suggested_key": {
+        "default": "Alt+Shift+1"
+      },
+      "description": "Trigger bored alert"
+    },
+    "tired": {
+      "suggested_key": {
+        "default": "Alt+Shift+2"
+      },
+      "description": "Trigger tired alert"
+    },
+    "distracted": {
+      "suggested_key": {
+        "default": "Alt+Shift+3"
+      },
+      "description": "Trigger distracted alert"
+    },
+    "finish": {
+      "suggested_key": {
+        "default": "Alt+Shift+4"
+      },
+      "description": "Trigger finish alert"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["toast-config.js", "content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["cats/*.svg", "icons/*.svg", "voice/*.m4a"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
+  "icons": {
+    "128": "icon.png"
+  }
+}

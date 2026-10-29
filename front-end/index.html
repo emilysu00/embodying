@@ -1,0 +1,199 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Focus — Study Companion</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link href="cats/icon.svg" rel="icon" type="image/svg+xml" />
+
+    <link href="style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- The main dashboard is a single-page study interface. It keeps the timer,
+         progress summary, and control buttons together in one view so the user can
+         see their focus state without opening additional screens. -->
+    <div class="app">
+      <header class="topbar">
+        <img
+          alt=""
+          aria-hidden="true"
+          class="topbar-logo"
+          src="cats/logo.svg"
+        />
+        <button aria-label="Today" class="date-control" id="dateBtn">
+          <img
+            alt=""
+            aria-hidden="true"
+            class="asset-icon"
+            src="icons/calendar_month.svg"
+          />
+          <span>Today</span><span class="today-chevron">⌄</span></button
+        ><button aria-label="Profile" class="icon-round" id="profileBtn">
+          <img
+            alt=""
+            aria-hidden="true"
+            class="asset-icon"
+            src="icons/account_circle.svg"
+          />
+        </button>
+      </header>
+      <aside class="sidebar" id="sidebar">
+        <button aria-label="Toggle sidebar" class="collapse" id="collapseBtn">
+          <img
+            alt=""
+            aria-hidden="true"
+            class="asset-icon"
+            src="icons/keyboard_double_arrow_left.svg"
+          />
+        </button>
+        <button class="nav-link active" data-page="Focus">
+          <img
+            alt=""
+            aria-hidden="true"
+            class="asset-icon"
+            src="icons/mindfulness.svg"
+          /><span class="nav-label">Focus</span>
+        </button>
+        <button class="nav-link" data-page="Settings">
+          <img
+            alt=""
+            aria-hidden="true"
+            class="asset-icon"
+            src="icons/brightness_5.svg"
+          /><span class="nav-label">Settings</span>
+        </button>
+      </aside>
+      <main class="workspace">
+        <!-- The timer sits at the centre of the page and is the main interaction point.
+             Clicking the circular timer opens the study-goal modal, while the button
+             below toggles the current session between active study and paused states. -->
+        <section aria-label="Focus timer" class="focus-center">
+          <div
+            aria-label="Set study time"
+            class="timer"
+            id="timer"
+            role="button"
+            tabindex="0"
+            title="Click to set study time"
+          >
+            <div
+              class="timer-celebration"
+              id="timerCelebration"
+              aria-hidden="true"
+            ></div>
+            <div class="timer-content">
+              <div class="timer-clock" id="clock">00:00</div>
+              <div class="timer-goal hidden" id="goalLabel">
+                Study Goal · 60:00
+              </div>
+              <div class="timer-break-status hidden" id="breakStatusLabel">
+                Break Counting · 05:00
+              </div>
+            </div>
+          </div>
+          <div class="controls">
+            <button
+              aria-disabled="true"
+              class="secondary-btn"
+              disabled=""
+              id="timerBtn"
+            >
+              <span class="timer-symbol" id="timerSymbol">▶</span
+              ><span id="timerBtnLabel">Keep studying</span>
+            </button>
+            <div class="sound-control">
+              <button aria-label="Mute" id="muteBtn">
+                <img
+                  alt=""
+                  aria-hidden="true"
+                  class="asset-icon"
+                  src="icons/brand_awareness.svg"
+                /></button
+              ><input
+                aria-label="Volume"
+                id="volume"
+                max="100"
+                min="0"
+                type="range"
+                value="50"
+              />
+            </div>
+            <button
+              type="button"
+              id="resetBtn"
+              class="reset-btn"
+              aria-label="Reset this session"
+              title="Reset session"
+            >
+              Reset
+            </button>
+          </div>
+        </section>
+        <div
+          aria-live="polite"
+          class="celebration hidden"
+          id="celebration"
+        ></div>
+        <!-- The progress panel summarises the user's daily study target and how much
+             time they have accumulated so far. It is intentionally simple and sits
+             beneath the timer to keep the focus on the learning task. -->
+        <section aria-label="Today's Progress" class="progress-card">
+          <div class="progress-head">
+            <span>Today's Progress</span
+            ><button
+              aria-label="Collapse progress"
+              class="text-button"
+              id="progressToggle"
+            >
+              <img
+                alt=""
+                aria-hidden="true"
+                class="asset-icon"
+                src="icons/keyboard_double_arrow_left.svg"
+              />
+            </button>
+          </div>
+          <div id="progressBody">
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-foot">
+              <div class="progress-foot-left">
+                <span id="progressCaption"
+                  ><img
+                    alt=""
+                    aria-hidden="true"
+                    class="asset-icon"
+                    src="icons/check_circle.svg"
+                  />
+                  <span id="percentText">0% complied</span></span
+                >
+              </div>
+              <div class="progress-daily-right" id="dailyGoalInfo">
+                Daily goal not set yet
+              </div>
+            </div>
+            <div class="progress-details hidden" id="progressDetail">
+              Session progress: 0 / 60 minutes
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="overlay hidden" id="overlay" role="presentation">
+      <div id="modalHost"></div>
+    </div>
+    <div class="toast hidden" id="toast" role="status"></div>
+
+    <script defer="True" src="toast-config.js"></script>
+    <script defer="True" src="script.js"></script>
+  </body>
+</html>

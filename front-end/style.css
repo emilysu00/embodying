@@ -1,0 +1,1166 @@
+/*
+  Main styling for the Study Support dashboard and reminder overlays.
+  This file defines the layout, the circular timer, the progress summary, and the
+  pop-up cards used by the study assistant. It keeps the interface calm and simple
+  while still making the timer and daily progress clearly visible.
+*/
+:root {
+  --sky: #9fc8ea;
+  --canvas: #c7def3;
+  --sidebar: #eef4f9;
+  --pale-study: #dcebfa;
+  --pale-break: #df4195;
+  --paler: #f2f4f7;
+  --blue: #5e9fd8;
+  --navy: #0a4d95;
+  --pink: #df4195;
+  --ring-fill-study: var(--pink);
+  --ring-fill-break: var(--navy);
+  --text: #102139;
+  --muted: #7ca1c6;
+  --white: #fff;
+  --pill: 999px;
+  --r-lg: 24px;
+  --shadow: 0 16px 42px rgba(10, 77, 149, 0.14);
+  font-family: "DM Sans", Arial, sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: inherit;
+}
+body {
+  background: #eaf2fb;
+  color: var(--text);
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--pink);
+  outline-offset: 3px;
+}
+.hidden {
+  display: none !important;
+}
+.asset-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-rows: 70px minmax(calc(100vh - 70px), auto);
+}
+.topbar {
+  grid-column: 1/-1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  background: var(--sky);
+  padding: 0 28px;
+}
+.topbar-logo {
+  display: block;
+  height: 46px;
+  width: auto;
+  object-fit: contain;
+  margin-right: auto;
+}
+.topbar button {
+  border: 0;
+  background: #fff;
+  color: var(--navy);
+  font-weight: 700;
+}
+.date-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 24px;
+  padding: 11px 16px;
+}
+.today-chevron {
+  line-height: 1;
+  transform: translateY(-1px);
+}
+.icon-round {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.notice-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pink);
+  top: 9px;
+  right: 10px;
+}
+.sidebar {
+  background: var(--sidebar);
+  min-height: calc(100vh - 70px);
+}
+.collapse {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 16px;
+  border: 0;
+  background: #f7fafc;
+}
+.collapse .asset-icon {
+  transform: rotate(90deg);
+}
+.nav-link {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 30px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.nav-link.active {
+  background: var(--blue);
+  color: #fff;
+}
+.workspace {
+  background: var(--canvas);
+  padding: 42px 36px 38px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.focus-center {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* The circular timer is the visual centre of this interface. It uses a conic
+   gradient to show the percentage complete for the current study phase or break,
+   while the inner circle keeps the text readable and the colours consistent. */
+.timer {
+  --progress: 0;
+  --ring-fill: var(--ring-fill-study);
+  --ring-track: var(--canvas);
+  --pale-fill: var(--pale-study);
+  --break-segments: "";
+  --size: 425px;
+  width: var(--size);
+  height: var(--size);
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--pale-fill);
+  overflow: hidden;
+}
+.timer-celebration {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+}
+.timer.is-celebrating .timer-celebration {
+  opacity: 1;
+}
+.timer-celebration .confetti-piece {
+  position: absolute;
+  top: -18%;
+  left: 50%;
+  width: 12px;
+  height: 22px;
+  border-radius: 999px;
+  opacity: 0;
+  transform: translate(-50%, 0) rotate(0deg);
+  animation: timer-confetti-fall var(--duration)
+    cubic-bezier(0.22, 0.8, 0.28, 1) forwards;
+  animation-delay: var(--delay);
+}
+@keyframes timer-confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -10%) rotate(0deg) scale(0.7);
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--drift)), 115%) rotate(var(--spin));
+  }
+}
+.timer::before {
+  content: "";
+  position: absolute;
+  inset: 36px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from -90deg,
+    var(--ring-fill) calc(var(--progress) * 1%),
+    var(--ring-track) 0
+  );
+}
+.timer.has-break-segments::before {
+  background:
+    conic-gradient(from -90deg, #09447e var(--break-segments), transparent 0),
+    conic-gradient(
+      from -90deg,
+      var(--ring-fill) calc(var(--progress) * 1%),
+      var(--ring-track) 0
+    );
+}
+.timer::after {
+  content: "";
+  position: absolute;
+  inset: 58px;
+  border-radius: 50%;
+  background: var(--paler);
+}
+.timer.break-mode::before {
+  background: conic-gradient(
+    from -90deg,
+    var(--ring-fill-break) calc(var(--progress) * 1%),
+    var(--ring-track) 0
+  );
+}
+.timer-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+.timer-clock {
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -3px;
+  font-variant-numeric: tabular-nums;
+  color: #000;
+}
+.timer.break-mode .timer-clock,
+.timer.break-mode .timer-goal,
+.timer.break-mode .timer-break-status {
+  color: #fff;
+}
+.timer.break-mode::after {
+  background: var(--pale-break);
+}
+.timer-goal {
+  margin-top: 10px;
+  font-size: 16px;
+  color: var(--navy);
+}
+.timer-break-status {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #89aed2;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 34px 0 56px;
+}
+.primary-btn,
+.secondary-btn,
+.secondary-outline {
+  border-radius: var(--pill);
+  min-width: 275px;
+  height: 48px;
+  border: 1.5px solid var(--blue);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 0 24px;
+  transition:
+    filter 0.15s,
+    transform 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.primary-btn {
+  background: var(--blue);
+  color: #fff;
+}
+.secondary-btn {
+  background: #ececec;
+  color: #82a4c9;
+}
+.secondary-outline {
+  background: #fff;
+  color: var(--navy);
+}
+.primary-btn:hover,
+.secondary-outline:hover {
+  filter: brightness(0.97);
+}
+.primary-btn:active,
+.secondary-outline:active {
+  transform: translateY(1px);
+}
+.secondary-btn:disabled {
+  opacity: 1;
+}
+.sound-control {
+  background: var(--navy);
+  border-radius: var(--pill);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+}
+.sound-control button {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+.sound-control input {
+  width: 100px;
+  accent-color: var(--pink);
+}
+/* The progress card sits under the timer and tracks the day's total study time.
+   It uses a wide horizontal bar to show how close the user is to their daily goal,
+   while the smaller detail text keeps the session and break information readable. */
+.progress-card {
+  width: min(100%, 1060px);
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 24px;
+  padding: 32px 44px;
+  margin-top: auto;
+}
+.progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--navy);
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+.text-button {
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  font-size: 22px;
+}
+.progress-track {
+  height: 56px;
+  border-radius: var(--pill);
+  background: #daebf9;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--blue);
+  border-radius: var(--pill);
+  transition: width 0.25s;
+}
+.progress-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 700;
+  gap: 10px;
+}
+.progress-foot-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#progressCaption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.progress-details {
+  color: #5d84ac;
+  font-size: 13px;
+  margin-top: 6px;
+}
+.hearts {
+  display: flex;
+  gap: 6px;
+}
+.hearts .asset-icon {
+  width: 24px;
+  height: 24px;
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 57, 118, 0.48);
+  display: grid;
+  place-items: center;
+  padding: 26px;
+  z-index: 20;
+}
+.modal {
+  background: var(--canvas);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  width: min(100%, 1120px);
+}
+.daily-goal-modal {
+  width: min(100%, 760px);
+}
+.daily-goal-card {
+  background: #f3eef1;
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  border-radius: 24px;
+  overflow: hidden;
+}
+.daily-goal-copy {
+  padding: 44px 40px;
+}
+.eyebrow {
+  font-size: 15px;
+  margin: 0 0 18px;
+}
+.daily-goal-copy h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--navy);
+}
+.daily-goal-copy p {
+  margin: 0 0 18px;
+  font-size: 14px;
+}
+.daily-goal-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.daily-goal-controls select {
+  height: 46px;
+  min-width: 180px;
+  border-radius: 24px;
+  border: 1px solid #444;
+  padding: 0 14px;
+  background: #fff;
+}
+.text-link {
+  border: 0;
+  background: transparent;
+  color: #627fa1;
+  text-decoration: underline;
+  padding: 0;
+  margin-top: 14px;
+}
+.daily-goal-illustration {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 24px 22px 0 0;
+}
+.daily-goal-illustration img {
+  height: auto;
+  object-fit: contain;
+}
+.goal-dialog {
+  max-width: 440px;
+  padding: 34px;
+  text-align: center;
+}
+.goal-dialog h2 {
+  margin: 0 0 10px;
+  color: var(--navy);
+}
+.goal-dialog p {
+  margin: 0 0 18px;
+}
+.goal-entry {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.goal-entry input {
+  width: 130px;
+  padding: 13px 16px;
+  border-radius: 24px;
+  border: 1px solid #9fb8d1;
+  text-align: center;
+  font-size: 20px;
+}
+.goal-error {
+  color: #b02666;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.large-alert {
+  display: grid;
+  grid-template-columns: 30% 1fr;
+  min-height: 540px;
+}
+.alert-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.alert-body.wide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 28px 42px 36px;
+}
+.alert-avatar {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 24px rgba(17, 53, 88, 0.24);
+  margin-bottom: 24px;
+}
+.alert-avatar img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+}
+.big-title {
+  margin: 0 0 18px;
+  font-size: 38px;
+  line-height: 1.12;
+  color: #000;
+}
+.big-text {
+  margin: 0 0 30px;
+  font-size: 22px;
+  line-height: 1.5;
+  color: #000;
+  max-width: 760px;
+}
+.split-actions {
+  width: min(720px, 100%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 2px solid var(--navy);
+  border-radius: 24px;
+  overflow: hidden;
+}
+.split-btn {
+  min-height: 92px;
+  font-size: 26px;
+  border: 0;
+  background: #fff;
+  color: var(--navy);
+}
+.split-btn.solid {
+  background: var(--navy);
+  color: #fff;
+}
+.split-btn.ghost {
+  background: transparent;
+  color: var(--navy);
+}
+/* Toast notifications appear as large floating reminder cards in the lower-right
+   corner. They are designed to stand out without blocking the whole page, and they
+   are shown in addition to the smaller modal alerts that appear in the centre. */
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 40;
+  box-shadow: var(--shadow);
+  border-radius: 30px;
+  border: 2px solid rgba(7, 68, 126, 0.9);
+}
+
+.toast-card {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.5fr) minmax(220px, 1fr);
+  align-items: center;
+  min-width: min(760px, calc(100vw - 32px));
+  min-height: 290px;
+  padding: 18px 28px 18px 28px;
+  border-radius: 30px;
+  background: rgba(201, 228, 244, 0.96);
+  color: var(--navy);
+}
+
+.toast-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  padding: 8px 8px 8px 10px;
+}
+
+.toast-title {
+  font-size: clamp(2rem, 2.4vw, 3.2rem);
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: #0b3a68;
+}
+
+.toast-message {
+  margin: 0;
+  font-size: clamp(1.1rem, 1.5vw, 1.7rem);
+  line-height: 1.45;
+  color: rgba(8, 52, 92, 0.96);
+}
+
+.toast-illustration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.toast-illustration img {
+  width: min(100%, 370px);
+  height: auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 12px 18px rgba(5, 68, 126, 0.12));
+}
+
+@media (max-width: 700px) {
+  .toast-card {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding: 18px 18px 12px;
+  }
+
+  .toast-copy {
+    padding: 8px 4px;
+  }
+
+  .toast-illustration {
+    order: -1;
+  }
+}
+@media (max-width: 1100px) {
+  .large-alert {
+    grid-template-columns: 220px 1fr;
+    min-height: 420px;
+  }
+  .big-title {
+    font-size: 28px;
+  }
+  .big-text {
+    font-size: 18px;
+  }
+  .split-btn {
+    font-size: 20px;
+    min-height: 74px;
+  }
+}
+
+/* V4 layout refinements */
+.progress-daily-right {
+  color: #6488ad;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.controls {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.reset-btn {
+  height: 48px;
+  border: 1.5px solid var(--navy);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--navy);
+  padding: 0 17px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.reset-btn:hover {
+  background: #e3f0fc;
+}
+.reset-btn:active {
+  transform: translateY(1px);
+}
+.goal-dialog {
+  width: min(440px, calc(100vw - 40px));
+  padding: 32px 28px;
+}
+.goal-dialog .modal-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin-top: 20px;
+}
+.goal-dialog .modal-buttons > button {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 48px;
+  padding: 0 10px;
+  border-radius: 24px;
+}
+.overlay:has(.large-alert) {
+  place-items: end end;
+  padding: 24px;
+}
+.overlay .large-alert {
+  width: min(820px, calc(100vw - 48px));
+  min-height: 310px;
+  border-radius: 24px;
+  grid-template-columns: 30% minmax(0, 1fr);
+}
+.overlay .large-alert .alert-body.wide {
+  padding: 18px 25px;
+}
+.overlay .large-alert .alert-avatar {
+  width: 70px;
+  height: 70px;
+  margin-bottom: 12px;
+}
+.overlay .large-alert .alert-avatar img {
+  width: 48px;
+  height: 48px;
+}
+.overlay .large-alert .big-title {
+  font-size: 25px;
+  margin-bottom: 10px;
+}
+.overlay .large-alert .big-text {
+  font-size: 15px;
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+.overlay .large-alert .split-actions {
+  border-radius: 24px;
+}
+.overlay .large-alert .split-btn {
+  min-height: 54px;
+  font-size: 16px;
+}
+.timer.break-mode::before {
+  background: conic-gradient(
+    from -90deg,
+    var(--ring-fill) calc(var(--progress) * 1%),
+    var(--ring-track) 0
+  );
+}
+@media (max-width: 700px) {
+  .progress-foot {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .progress-daily-right {
+    white-space: normal;
+  }
+  .overlay .large-alert {
+    grid-template-columns: 125px minmax(0, 1fr);
+  }
+  .overlay .large-alert .big-title {
+    font-size: 19px;
+  }
+  .overlay .large-alert .big-text {
+    font-size: 12px;
+  }
+  .overlay .large-alert .alert-body.wide {
+    padding: 12px;
+  }
+}
+
+/* ===== V5: ONE-SCREEN RESPONSIVE DASHBOARD =====
+   Fit by available *height* as well as width; never crop to hide overflow.
+   Desktop and laptop layouts (including 1366x768 and 1280x720).
+*/
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.app {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  grid-template-columns: clamp(68px, 16.5vw, 240px) minmax(0, 1fr);
+  grid-template-rows: clamp(46px, 7.5dvh, 70px) minmax(0, 1fr);
+  overflow: hidden;
+}
+.topbar {
+  min-height: 0;
+  padding-inline: clamp(12px, 2vw, 28px);
+}
+.sidebar {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.workspace {
+  height: 100%;
+  min-height: 0;
+  padding: clamp(9px, 2.4dvh, 30px) clamp(12px, 2.5vw, 35px)
+    clamp(10px, 2.4dvh, 30px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(6px, 1.4dvh, 15px);
+  overflow: hidden;
+}
+.focus-center {
+  flex: 1 1 auto;
+  min-height: 0;
+  justify-content: center;
+  gap: clamp(8px, 2dvh, 24px);
+}
+.timer {
+  --size: min(425px, 35vw, max(110px, calc(100dvh - 365px)));
+  flex: 0 0 auto;
+}
+.timer::before {
+  inset: 8.5%;
+}
+.timer::after {
+  inset: 13.7%;
+}
+.timer-clock {
+  font-size: clamp(22px, min(4.4vw, 8dvh), 64px);
+}
+.timer-goal {
+  margin-top: clamp(4px, 1dvh, 10px);
+  font-size: clamp(10px, 1.2vw, 16px);
+}
+.timer-break-status {
+  font-size: clamp(9px, 1vw, 14px);
+}
+.controls {
+  flex: 0 0 auto;
+  margin: 0;
+  gap: clamp(6px, 1vw, 10px);
+}
+.controls .primary-btn,
+.controls .secondary-btn {
+  min-width: 0;
+  width: clamp(130px, 19vw, 275px);
+}
+.controls .primary-btn,
+.controls .secondary-btn,
+.sound-control,
+.reset-btn {
+  height: clamp(34px, 5.3dvh, 48px);
+}
+.sound-control input {
+  width: clamp(42px, 7vw, 100px);
+}
+.progress-card {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: clamp(10px, 2.1dvh, 24px) clamp(14px, 2.8vw, 44px);
+  max-height: 30%;
+}
+.progress-head {
+  font-size: clamp(13px, 1.4vw, 18px);
+  margin-bottom: clamp(4px, 0.9dvh, 12px);
+}
+.progress-track {
+  height: clamp(16px, 4.8dvh, 48px);
+}
+.progress-foot {
+  margin-top: clamp(5px, 1.2dvh, 12px);
+  font-size: clamp(11px, 1.05vw, 14px);
+}
+.progress-daily-right {
+  font-size: clamp(10px, 1vw, 13px);
+}
+.progress-details {
+  margin-top: 3px;
+  font-size: clamp(10px, 0.95vw, 13px);
+}
+.progress-foot-left {
+  gap: 2px;
+}
+/* Dialogs fit the visible viewport too. Keep the controls inside their card. */
+.overlay {
+  max-width: 100vw;
+  max-height: 100dvh;
+  padding: clamp(10px, 2dvh, 24px);
+}
+.modal {
+  max-height: calc(100dvh - 24px);
+}
+.daily-goal-card {
+  max-height: calc(100dvh - 24px);
+}
+.daily-goal-copy {
+  padding: clamp(16px, 4dvh, 44px) clamp(16px, 3vw, 40px);
+}
+.daily-goal-illustration img {
+  max-height: 31dvh;
+}
+.goal-dialog {
+  padding: clamp(14px, 3dvh, 32px) clamp(16px, 2.5vw, 28px);
+}
+.overlay .large-alert {
+  min-height: 0;
+  max-height: calc(100dvh - 24px);
+}
+.overlay .large-alert .alert-body.wide {
+  padding: clamp(10px, 2dvh, 18px) clamp(12px, 2vw, 25px);
+}
+.overlay .large-alert .alert-avatar {
+  width: clamp(40px, 8dvh, 70px);
+  height: clamp(40px, 8dvh, 70px);
+  margin-bottom: 6px;
+}
+.overlay .large-alert .alert-avatar img {
+  width: 70%;
+  height: 70%;
+}
+.overlay .large-alert .big-title {
+  font-size: clamp(17px, 2.4dvh, 25px);
+  margin-bottom: 7px;
+}
+.overlay .large-alert .big-text {
+  font-size: clamp(12px, 1.7dvh, 15px);
+  margin-bottom: 10px;
+}
+.overlay .large-alert .split-btn {
+  min-height: clamp(36px, 6dvh, 54px);
+}
+@media (max-height: 700px) {
+  .workspace {
+    gap: 5px;
+  }
+  .timer {
+    --size: min(370px, 33vw, max(105px, calc(100dvh - 335px)));
+  }
+  .focus-center {
+    gap: 8px;
+  }
+  .progress-card {
+    padding-block: 11px;
+  }
+  .progress-track {
+    height: 22px;
+  }
+}
+@media (max-height: 560px) {
+  .timer {
+    --size: min(270px, 30vw, max(94px, calc(100dvh - 295px)));
+  }
+  .workspace {
+    padding-block: 7px;
+  }
+  .progress-card {
+    padding-block: 7px;
+  }
+  .progress-head {
+    margin-bottom: 3px;
+  }
+  .progress-track {
+    height: 15px;
+  }
+  .progress-foot {
+    margin-top: 3px;
+  }
+  .controls .primary-btn,
+  .controls .secondary-btn,
+  .sound-control,
+  .reset-btn {
+    height: 32px;
+  }
+  .daily-goal-illustration img {
+    max-height: 24dvh;
+  }
+}
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+  .sidebar .nav-link {
+    padding: 14px 19px;
+  }
+  .sidebar .nav-label {
+    display: none;
+  }
+  .timer {
+    --size: min(330px, 46vw, max(105px, calc(100dvh - 365px)));
+  }
+  .controls .primary-btn,
+  .controls .secondary-btn {
+    width: clamp(115px, 23vw, 230px);
+  }
+  .sound-control {
+    padding-inline: 9px;
+  }
+  .progress-card {
+    width: 100%;
+  }
+}
+@media (max-width: 650px) {
+  .workspace {
+    padding-inline: 8px;
+  }
+  .controls {
+    gap: 5px;
+  }
+  .controls .primary-btn,
+  .controls .secondary-btn {
+    width: 104px;
+    padding-inline: 6px;
+    font-size: 12px;
+  }
+  .sound-control input {
+    width: 35px;
+  }
+  .reset-btn {
+    font-size: 12px;
+    padding-inline: 8px;
+  }
+  .daily-goal-card {
+    grid-template-columns: 1fr;
+  }
+  .daily-goal-illustration {
+    display: none;
+  }
+  .daily-goal-controls {
+    flex-wrap: wrap;
+  }
+  .daily-goal-controls .primary-btn {
+    min-width: 130px;
+  }
+}
+
+/* V6 fixes: valid composited ring and compact right-bottom mascot toast */
+.timer.has-break-segments::before {
+  background:
+    var(--break-overlay, none),
+    conic-gradient(
+      from -90deg,
+      var(--ring-fill) calc(var(--progress) * 1%),
+      var(--ring-track) 0
+    );
+}
+.app.sidebar-collapsed {
+  grid-template-columns: 68px minmax(0, 1fr) !important;
+}
+.sidebar.collapsed .nav-label {
+  display: none !important;
+}
+.sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding-inline: 0;
+}
+.sidebar.collapsed .collapse .asset-icon {
+  transform: rotate(-90deg);
+}
+.progress-card:has(#progressBody.hidden) {
+  padding-block: clamp(15px, 2.3dvh, 25px);
+}
+.progress-card:has(#progressBody.hidden) .progress-head {
+  margin-bottom: 0;
+}
+.overlay:has(.large-alert) {
+  place-items: end end !important;
+  padding: 24px;
+}
+.overlay .large-alert {
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  width: min(780px, calc(100vw - 48px));
+  min-height: 0;
+  border-radius: 24px;
+  background: #c9e2f7;
+  box-shadow:
+    0 12px 0 #0d2745,
+    0 16px 32px #14294255;
+}
+.overlay .large-alert .alert-body.wide {
+  grid-column: 1;
+  grid-row: 1;
+  padding: 30px 20px 30px 35px;
+}
+.overlay .large-alert .alert-cat-art {
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 12px;
+}
+.overlay .large-alert .alert-cat-art img {
+  display: block;
+  width: 100%;
+  max-height: 270px;
+  object-fit: contain;
+}
+.overlay .large-alert .big-title {
+  font-size: clamp(21px, 2vw, 30px);
+  line-height: 1.2;
+  color: #080808;
+  margin-bottom: 14px;
+}
+.overlay .large-alert .big-text {
+  font-size: clamp(13px, 1.3vw, 17px);
+  line-height: 1.48;
+  color: #080808;
+  margin-bottom: 20px;
+}
+.overlay .large-alert .split-actions {
+  width: 100%;
+  border-radius: 16px;
+}
+.overlay .large-alert .split-btn {
+  min-height: 55px;
+  font-size: clamp(13px, 1.25vw, 18px);
+}
+@media (max-width: 700px) {
+  .overlay .large-alert .alert-body.wide {
+    padding: 12px;
+  }
+  .overlay .large-alert .alert-cat-art {
+    padding: 8px;
+  }
+}
